@@ -13,7 +13,7 @@ var (
 )
 
 type Repository interface {
-	GetBalance(context.Context)
+	GetWallets(context.Context)
 }
 
 type WalletRepository struct {
@@ -24,18 +24,47 @@ func NewWalletRepository(pool *pgxpool.Pool) *WalletRepository {
 	return &WalletRepository{pool: pool}
 }
 
-func (r *WalletRepository) GetBalance(c context.Context, walletId string) (Wallet, error) {
-	var wallet Wallet
+func (r *WalletRepository) GetWallets(ctx context.Context) ([]Wallet, error) {
+	rows, err := r.pool.Query(ctx, getBalanceQuery)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
 
-	err := r.pool.QueryRow(c, getBalanceQuery, walletId).
-		Scan(
-			&wallet.Id,
-			&wallet.Balances,
+	walletsMap := make(map[string]*Wallet)
+
+	for rows.Next() {
+		var walletId string
+		var amount float64
+		var currency string
+
+		err := rows.Scan(
+			&walletId,
+			&amount,
+			&currency,
 		)
 
-	if err != nil {
-		return Wallet{}, err
+		if err != nil {
+			return nil, err
+		}
+
+		if _, exists := walletsMap[walletId]; !exists {
+			walletsMap[walletId] = &Wallet{
+				Id:       walletId,
+				Balances: []Balance{},
+			}
+		}
+
+		walletsMap[walletId].Balances = append(walletsMap[walletId].Balances, Balance{
+			Amount:   amount,
+			Currency: currency,
+		})
 	}
 
-	return wallet, nil
+	wallets := make([]Wallet, 0, len(walletsMap))
+	for _, wallet := range walletsMap {
+		wallets = append(wallets, *wallet)
+	}
+
+	return wallets, nil
 }

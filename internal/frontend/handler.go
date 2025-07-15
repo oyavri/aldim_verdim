@@ -44,7 +44,10 @@ func (h *WalletHandler) PostEvents(c *fiber.Ctx) error {
 }
 
 func (h *WalletHandler) GetWallets(c *fiber.Ctx) error {
-	var response WalletResponse
+	wallets, err := h.service.GetWallets(c.Context())
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to fetch wallets"})
+	}
 
-	return c.Status(fiber.StatusOK).JSON(response)
+	return c.Status(fiber.StatusOK).JSON(wallets)
 }

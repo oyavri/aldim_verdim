@@ -7,7 +7,7 @@ import (
 )
 
 type Service interface {
-	GetBalance(context.Context)
+	GetWallets(context.Context)
 	SendEvents(context.Context)
 }
 
@@ -23,21 +23,20 @@ func NewWalletService(repo *WalletRepository, producer *kafka.Producer) *WalletS
 	}
 }
 
-func (s *WalletService) GetBalance(c context.Context) (Wallet, error) {
-	var walletId string
-
-	wallet, err := s.repo.GetBalance(c, walletId)
+func (s *WalletService) GetWallets(c context.Context) ([]Wallet, error) {
+	wallets, err := s.repo.GetWallets(c)
 
 	if err != nil {
-		return Wallet{}, err
+		return nil, err
 	}
 
-	return wallet, nil
+	return wallets, nil
 }
 
 func (s *WalletService) SendEvent(c context.Context, action string, payload []byte) error {
 	if err := s.kafkaProducer.Publish(c, action, payload); err != nil {
-
+		return err
 	}
 
+	return nil
 }
