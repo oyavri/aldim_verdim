@@ -1,8 +1,9 @@
 package main
 
 import (
+	"context"
 	"fmt"
-	"os"
+	"log"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/oyavri/aldim_verdim/internal/frontend"
@@ -14,16 +15,25 @@ func main() {
 		AppName: "Wallet Frontend",
 	})
 
+	cfg, err := frontend.LoadConfig()
+	if err != nil {
+		log.Fatal("Error loading config")
+	}
+
+	ctx := context.Background()
+	dbPool, err := frontend.NewPostgresPool(ctx, cfg.DbConnectionString)
+	if err != nil {
+		log.Fatal("Error creating database pool")
+	}
+
 	kafkaProducer := kafka.NewProducer()
 
-	repository := frontend.NewWalletRepository()
-	service := frontend.NewWalletService(repository)
-	handler := frontend.NewWalletHandler(kafkaProducer, service)
+	repository := frontend.NewWalletRepository(dbPool)
+	service := frontend.NewWalletService(repository, kafkaProducer)
+	handler := frontend.NewWalletHandler(service)
 
 	app.Get("/", handler.GetWallets)
 	app.Post("/", handler.PostEvents)
 
-	hostname := os.Getenv("HOSTNAME")
-	port := os.Getenv("PORT")
-	app.Listen(fmt.Sprintf("%s:%s", hostname, port))
+	app.Listen(fmt.Sprintf("%s:%s", cfg.Hostname, cfg.Hostname))
 }
