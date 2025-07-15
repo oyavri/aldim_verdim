@@ -49,5 +49,8 @@ func (h *WalletHandler) GetWallets(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to fetch wallets"})
 	}
 
-	return c.Status(fiber.StatusOK).JSON(wallets)
+	return c.Status(fiber.StatusOK).JSON(
+		WalletResponse{
+			Wallets: wallets,
+		})
 }
