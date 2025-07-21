@@ -1,7 +1,13 @@
-package frontend
+package entity
 
-type EventRequest struct {
-	Events []Event `json:"events" validate:"required"`
+type Wallet struct {
+	Id       string    `json:"id"`
+	Balances []Balance `json:"balances"`
+}
+
+type Balance struct {
+	Amount   float64 `json:"amount"`
+	Currency string  `json:"currency"`
 }
 
 type Event struct {
@@ -20,18 +26,4 @@ type Meta struct {
 type ActionAttributes struct {
 	Amount   float64 `json:"amount"`
 	Currency string  `json:"currency" validate:"oneof=TRY USD"`
-}
-
-type WalletResponse struct {
-	Wallets []Wallet `json:"wallets"`
-}
-
-type Wallet struct {
-	Id       string    `json:"id"`
-	Balances []Balance `json:"balances"`
-}
-
-type Balance struct {
-	Amount   float64 `json:"amount"`
-	Currency string  `json:"currency"`
 }

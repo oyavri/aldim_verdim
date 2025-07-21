@@ -3,7 +3,7 @@ package frontend
 import (
 	"context"
 
-	"github.com/oyavri/aldim_verdim/internal/shared/kafka"
+	"github.com/oyavri/aldim_verdim/internal/shared/entity"
 )
 
 type Service interface {
@@ -12,18 +12,18 @@ type Service interface {
 }
 
 type WalletService struct {
-	repo          *WalletRepository
-	kafkaProducer *kafka.Producer
+	repo          *WalletRepo
+	kafkaProducer *KafkaProducer
 }
 
-func NewWalletService(repo *WalletRepository, producer *kafka.Producer) *WalletService {
+func NewWalletService(repo *WalletRepo, producer *KafkaProducer) *WalletService {
 	return &WalletService{
 		repo:          repo,
 		kafkaProducer: producer,
 	}
 }
 
-func (s *WalletService) GetWallets(c context.Context) ([]Wallet, error) {
+func (s *WalletService) GetWallets(c context.Context) ([]entity.Wallet, error) {
 	wallets, err := s.repo.GetWallets(c)
 
 	if err != nil {

@@ -5,6 +5,7 @@ import (
 	_ "embed"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/oyavri/aldim_verdim/internal/shared/entity"
 )
 
 var (
@@ -12,26 +13,26 @@ var (
 	getBalanceQuery string
 )
 
-type Repository interface {
+type WalletRepository interface {
 	GetWallets(context.Context)
 }
 
-type WalletRepository struct {
+type WalletRepo struct {
 	pool *pgxpool.Pool
 }
 
-func NewWalletRepository(pool *pgxpool.Pool) *WalletRepository {
-	return &WalletRepository{pool: pool}
+func NewWalletRepository(pool *pgxpool.Pool) *WalletRepo {
+	return &WalletRepo{pool: pool}
 }
 
-func (r *WalletRepository) GetWallets(ctx context.Context) ([]Wallet, error) {
+func (r *WalletRepo) GetWallets(ctx context.Context) ([]entity.Wallet, error) {
 	rows, err := r.pool.Query(ctx, getBalanceQuery)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	walletsMap := make(map[string]*Wallet)
+	walletsMap := make(map[string]*entity.Wallet)
 
 	for rows.Next() {
 		var walletId string
@@ -49,19 +50,19 @@ func (r *WalletRepository) GetWallets(ctx context.Context) ([]Wallet, error) {
 		}
 
 		if _, exists := walletsMap[walletId]; !exists {
-			walletsMap[walletId] = &Wallet{
+			walletsMap[walletId] = &entity.Wallet{
 				Id:       walletId,
-				Balances: []Balance{},
+				Balances: []entity.Balance{},
 			}
 		}
 
-		walletsMap[walletId].Balances = append(walletsMap[walletId].Balances, Balance{
+		walletsMap[walletId].Balances = append(walletsMap[walletId].Balances, entity.Balance{
 			Amount:   amount,
 			Currency: currency,
 		})
 	}
 
-	wallets := make([]Wallet, 0, len(walletsMap))
+	wallets := make([]entity.Wallet, 0, len(walletsMap))
 	for _, wallet := range walletsMap {
 		wallets = append(wallets, *wallet)
 	}

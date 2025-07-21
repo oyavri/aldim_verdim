@@ -11,6 +11,8 @@ type Config struct {
 	Port               string
 	Hostname           string
 	DbConnectionString string
+	Brokers            []string
+	Topic              string
 }
 
 func LoadConfig() (Config, error) {
@@ -23,10 +25,16 @@ func LoadConfig() (Config, error) {
 	hostname := os.Getenv("HOSTNAME")
 	port := os.Getenv("PORT")
 	dbConnStr := os.Getenv("DB_CONNECTION_STRING")
+	broker := os.Getenv("BROKERS")
+	brokers := make([]string, 1)
+	brokers = append(brokers, broker) // NEED TO REFACTOR
+	topic := os.Getenv("TOPIC")
 
 	return Config{
 		Hostname:           hostname,
 		Port:               port,
 		DbConnectionString: dbConnStr,
+		Brokers:            brokers,
+		Topic:              topic,
 	}, nil
 }

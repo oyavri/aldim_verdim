@@ -1,4 +1,4 @@
-package kafka
+package frontend
 
 import (
 	"context"
@@ -6,12 +6,12 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
-type Producer struct {
+type KafkaProducer struct {
 	Writer *kafka.Writer
 }
 
-func NewProducer(brokers []string, topic string) *Producer {
-	return &Producer{
+func NewProducer(brokers []string, topic string) *KafkaProducer {
+	return &KafkaProducer{
 		Writer: &kafka.Writer{
 			Addr:     kafka.TCP(brokers...),
 			Topic:    topic,
@@ -20,13 +20,13 @@ func NewProducer(brokers []string, topic string) *Producer {
 	}
 }
 
-func (p *Producer) Publish(ctx context.Context, key string, message []byte) error {
+func (p *KafkaProducer) Publish(ctx context.Context, key string, message []byte) error {
 	return p.Writer.WriteMessages(ctx, kafka.Message{
 		Key:   []byte(key),
 		Value: message,
 	})
 }
 
-func (p *Producer) Close() error {
+func (p *KafkaProducer) Close() error {
 	return p.Writer.Close()
 }

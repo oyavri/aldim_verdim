@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/oyavri/aldim_verdim/internal/shared/dto"
 )
 
 type Handler interface {
@@ -25,7 +26,7 @@ func (h *WalletHandler) PostEvents(c *fiber.Ctx) error {
 	c.Accepts("application/json")
 	c.AcceptsCharsets("utf-8")
 
-	var request EventRequest
+	var request dto.EventRequest
 	if err := c.BodyParser(&request); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid request"})
 	}
@@ -50,7 +51,7 @@ func (h *WalletHandler) GetWallets(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(
-		WalletResponse{
+		dto.WalletResponse{
 			Wallets: wallets,
 		})
 }
