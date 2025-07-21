@@ -6,7 +6,7 @@ import (
 	"log"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/oyavri/aldim_verdim/internal/shared/db"
+	"github.com/oyavri/aldim_verdim/pkg/db"
 )
 
 func Run() {

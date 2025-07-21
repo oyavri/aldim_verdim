@@ -5,7 +5,7 @@ import (
 	_ "embed"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/oyavri/aldim_verdim/internal/shared/entity"
+	"github.com/oyavri/aldim_verdim/pkg/entity"
 )
 
 var (

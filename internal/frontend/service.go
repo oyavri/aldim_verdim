@@ -3,7 +3,7 @@ package frontend
 import (
 	"context"
 
-	"github.com/oyavri/aldim_verdim/internal/shared/entity"
+	"github.com/oyavri/aldim_verdim/pkg/entity"
 )
 
 type Service interface {

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/oyavri/aldim_verdim/internal/shared/dto"
+	"github.com/oyavri/aldim_verdim/pkg/dto"
 )
 
 type Handler interface {
