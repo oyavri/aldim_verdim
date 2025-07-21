@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/oyavri/aldim_verdim/pkg/db"
@@ -34,5 +37,20 @@ func Run() {
 	app.Get("/", handler.GetWallets)
 	app.Post("/", handler.PostEvents)
 
-	app.Listen(fmt.Sprintf("%s:%s", cfg.Hostname, cfg.Hostname))
+	go func() {
+		log.Printf("Server is starting to listen requests on %s:%s\n", cfg.Hostname, cfg.Port)
+		app.Listen(fmt.Sprintf("%s:%s", cfg.Hostname, cfg.Port))
+	}()
+
+	signalChan := make(chan os.Signal, 1)
+	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
+
+	<-signalChan
+	signal.Stop(signalChan)
+
+	app.Shutdown()
+	log.Println("App is successfully shut down")
+
+	dbPool.Close()
+	log.Println("Database connection is successfully closed")
 }
