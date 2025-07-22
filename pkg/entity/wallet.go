@@ -6,17 +6,17 @@ type Wallet struct {
 }
 
 type Balance struct {
-	Amount   float64 `json:"amount"`
-	Currency string  `json:"currency"`
+	Amount   string `json:"amount"`
+	Currency string `json:"currency"`
 }
 
 type Event struct {
-	AppId            string           `json:"app" validate:"required"`
-	ActionType       string           `json:"type" validate:"required,oneof=BALANCE_INCREASE BALANCE_DECREASE"`
-	Time             string           `json:"time" validate:"required"` // needs refactoring according to Kafka or db
+	AppId            string           `json:"app"`
+	ActionType       string           `json:"type"`
+	Time             string           `json:"time"` // needs refactoring according to Kafka or db
 	Meta             Meta             `json:"meta"`
-	WalletId         string           `json:"wallet" validate:"required"`
-	ActionAttributes ActionAttributes `json:"attributes" validate:"required"`
+	WalletId         string           `json:"wallet"`
+	ActionAttributes ActionAttributes `json:"attributes"`
 }
 
 type Meta struct {
@@ -24,6 +24,6 @@ type Meta struct {
 }
 
 type ActionAttributes struct {
-	Amount   float64 `json:"amount"`
-	Currency string  `json:"currency" validate:"oneof=TRY USD"`
+	Amount   string `json:"amount"`
+	Currency string `json:"currency"`
 }

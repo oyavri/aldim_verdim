@@ -36,7 +36,7 @@ func (r *WalletRepo) GetWallets(ctx context.Context) ([]entity.Wallet, error) {
 
 	for rows.Next() {
 		var walletId string
-		var amount float64
+		var amount string
 		var currency string
 
 		err := rows.Scan(
