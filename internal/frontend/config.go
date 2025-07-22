@@ -2,10 +2,7 @@ package frontend
 
 import (
 	"fmt"
-	"log"
 	"os"
-
-	"github.com/joho/godotenv"
 )
 
 type Config struct {
@@ -17,11 +14,11 @@ type Config struct {
 }
 
 func LoadConfig() (Config, error) {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-		return Config{}, err
-	}
+	// err := godotenv.Load()
+	// if err != nil {
+	// 	log.Fatal("Error loading .env file")
+	// 	return Config{}, err
+	// }
 
 	hostname := os.Getenv("FIBER_HOSTNAME")
 	port := os.Getenv("FIBER_PORT")
