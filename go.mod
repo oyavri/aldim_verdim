@@ -3,6 +3,7 @@ module github.com/oyavri/aldim_verdim
 go 1.24.1
 
 require (
+	github.com/confluentinc/confluent-kafka-go v1.9.2
 	github.com/gofiber/fiber/v2 v2.52.8
 	github.com/jackc/pgx/v5 v5.7.5
 	github.com/joho/godotenv v1.5.1

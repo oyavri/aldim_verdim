@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/oyavri/aldim_verdim/pkg/db"
@@ -25,10 +26,16 @@ func Run() {
 		log.Fatal("Error creating database pool")
 	}
 
-	kafkaProducer := NewProducer(cfg.Broker, cfg.BrokerTopic)
+	producer, err := kafka.NewProducer(
+		&kafka.ConfigMap{
+			"bootstrap.servers": cfg.Broker,
+		})
+	if err != nil {
+		log.Fatal("Failed to create new producer")
+	}
 
 	repository := NewWalletRepository(dbPool)
-	service := NewWalletService(repository, kafkaProducer)
+	service := NewWalletService(repository, producer, cfg.BrokerTopic)
 	handler := NewWalletHandler(service)
 
 	app := fiber.New(fiber.Config{

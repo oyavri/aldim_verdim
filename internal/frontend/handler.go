@@ -30,13 +30,14 @@ func (h *WalletHandler) PostEvents(c *fiber.Ctx) error {
 	if err := c.BodyParser(&request); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid request"})
 	}
+
 	for _, event := range request.Events {
 		payload, err := json.Marshal(event)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "serialization failed"})
 		}
 
-		if err := h.service.SendEvent(c.Context(), event.ActionType, payload); err != nil {
+		if err := h.service.SendTransaction(c.Context(), event.ActionType, payload); err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to publish to Kafka"})
 		}
 	}
