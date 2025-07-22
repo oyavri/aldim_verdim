@@ -24,7 +24,7 @@ func Run() {
 		log.Fatal("Error creating database pool")
 	}
 
-	kafkaProducer := NewProducer(cfg.Brokers, cfg.Topic)
+	kafkaProducer := NewProducer(cfg.Broker, cfg.BrokerTopic)
 
 	repository := NewWalletRepository(dbPool)
 	service := NewWalletService(repository, kafkaProducer)

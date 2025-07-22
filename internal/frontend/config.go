@@ -1,6 +1,7 @@
 package frontend
 
 import (
+	"fmt"
 	"log"
 	"os"
 
@@ -11,8 +12,8 @@ type Config struct {
 	Port               string
 	Hostname           string
 	DbConnectionString string
-	Brokers            []string
-	Topic              string
+	Broker             string
+	BrokerTopic        string
 }
 
 func LoadConfig() (Config, error) {
@@ -22,19 +23,19 @@ func LoadConfig() (Config, error) {
 		return Config{}, err
 	}
 
-	hostname := os.Getenv("HOSTNAME")
-	port := os.Getenv("PORT")
+	hostname := os.Getenv("FIBER_HOSTNAME")
+	port := os.Getenv("FIBER_PORT")
 	dbConnStr := os.Getenv("DB_CONNECTION_STRING")
-	broker := os.Getenv("BROKERS")
-	brokers := make([]string, 1)
-	brokers = append(brokers, broker) // NEED TO REFACTOR
-	topic := os.Getenv("TOPIC")
+	brokerHostname := os.Getenv("KAFKA_HOSTNAME")
+	brokerPort := os.Getenv("KAFKA_PORT")
+	broker := fmt.Sprintf("%s:%s", brokerHostname, brokerPort)
+	brokerTopic := os.Getenv("KAFKA_TOPIC")
 
 	return Config{
 		Hostname:           hostname,
 		Port:               port,
 		DbConnectionString: dbConnStr,
-		Brokers:            brokers,
-		Topic:              topic,
+		Broker:             broker,
+		BrokerTopic:        brokerTopic,
 	}, nil
 }
