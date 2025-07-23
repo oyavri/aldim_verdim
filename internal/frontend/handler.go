@@ -1,11 +1,14 @@
 package frontend
 
 import (
-	"encoding/json"
+	"fmt"
+	"sort"
 	"strconv"
+	"sync"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/oyavri/aldim_verdim/pkg/dto"
+	"github.com/oyavri/aldim_verdim/pkg/entity"
 )
 
 type Handler interface {
@@ -32,21 +35,47 @@ func (h *WalletHandler) PostEvents(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid request"})
 	}
 
-	for _, event := range request.Events {
-		amountStr := event.ActionAttributes.Amount
-		_, err := strconv.ParseFloat(amountStr, 64) // Still pass the amount as string to be consumed
+	// Sort the sent events by time to send them in a FIFO queue on Kafka
+	sort.Slice(request.Events, func(i, j int) bool {
+		return request.Events[i].Time < request.Events[j].Time
+	})
 
-		if err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid amount parameter"})
-		}
+	var (
+		wg      sync.WaitGroup
+		errChan = make(chan error, len(request.Events))
+	)
 
-		payload, err := json.Marshal(event)
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "serialization failed"})
-		}
+	for _, e := range request.Events {
+		event := e
+		wg.Add(1)
 
-		if err := h.service.SendTransaction(c.Context(), event.ActionType, payload); err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to publish to Kafka"})
+		go func(event entity.Event) {
+			defer wg.Done()
+
+			amountStr := event.ActionAttributes.Amount
+			_, err := strconv.ParseFloat(amountStr, 64) // Still pass the amount as string to be consumed
+
+			if err != nil {
+				errChan <- fmt.Errorf("invalid amount parameter: %w", err)
+				return
+			}
+
+			if err := h.service.SendTransaction(c.Context(), event); err != nil {
+				errChan <- fmt.Errorf("failed to publish to Kafka: %w", err)
+				return
+			}
+		}(event)
+
+		wg.Wait()
+		close(errChan)
+
+		if len(errChan) > 0 {
+			var allErrors []string
+			for err := range errChan {
+				allErrors = append(allErrors, err.Error())
+			}
+
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"errors": allErrors})
 		}
 	}
 
