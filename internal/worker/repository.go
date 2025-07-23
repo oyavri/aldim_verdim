@@ -28,12 +28,12 @@ func NewWalletRepository(pool *pgxpool.Pool) *WalletRepo {
 	return &WalletRepo{pool: pool}
 }
 
-func (r *WalletRepo) IncreaseBalance(ctx context.Context, userId string, walletId string, amount float64, currency string) error {
-	_, err := r.pool.Exec(ctx, increaseBalanceQuery, walletId, userId, amount, currency)
+func (r *WalletRepo) IncreaseBalance(ctx context.Context, walletId string, amount float64, currency string) error {
+	_, err := r.pool.Exec(ctx, increaseBalanceQuery, walletId, currency, amount)
 	return err
 }
 
-func (r *WalletRepo) DecreaseBalance(ctx context.Context, userId string, walletId string, amount float64, currency string) error {
-	_, err := r.pool.Exec(ctx, decreaseBalanceQuery, walletId, userId, amount, currency)
+func (r *WalletRepo) DecreaseBalance(ctx context.Context, walletId string, amount float64, currency string) error {
+	_, err := r.pool.Exec(ctx, decreaseBalanceQuery, walletId, currency, amount)
 	return err
 }

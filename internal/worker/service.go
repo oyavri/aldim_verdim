@@ -33,9 +33,9 @@ func (s *EventService) HandleEvent(ctx context.Context, event entity.Event) erro
 
 	switch event.ActionType {
 	case "BALANCE_INCREASE":
-		s.repo.IncreaseBalance(ctx, event.Meta.UserId, event.WalletId, amountParsed, event.ActionAttributes.Currency)
+		s.repo.IncreaseBalance(ctx, event.WalletId, amountParsed, event.ActionAttributes.Currency)
 	case "BALANCE_DECREASE":
-		s.repo.DecreaseBalance(ctx, event.Meta.UserId, event.WalletId, amountParsed, event.ActionAttributes.Currency)
+		s.repo.DecreaseBalance(ctx, event.WalletId, amountParsed, event.ActionAttributes.Currency)
 	}
 
 	return nil

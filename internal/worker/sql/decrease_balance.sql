@@ -1,5 +1,5 @@
-INSERT INTO wallet_balance (walletId, currency, amount) 
-VALUES ($1, $2, $3)
-ON CONFLICT (currency) DO UPDATE
-SET amount = amount - EXCLUDED.amount
-    WHERE EXCLUDED.amount > 0;
+UPDATE wallet_balance 
+SET amount = wallet_balance.amount - $3
+WHERE $3 > 0
+    AND walletId = $1
+    AND currency = $2;
