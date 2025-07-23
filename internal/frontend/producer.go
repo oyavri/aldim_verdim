@@ -6,6 +6,11 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
+type Producer interface {
+	Produce(ctx context.Context, key []byte, value []byte) error
+	Close() error
+}
+
 type KafkaProducer struct {
 	w *kafka.Writer
 }

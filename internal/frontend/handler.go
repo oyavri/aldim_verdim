@@ -12,8 +12,9 @@ import (
 )
 
 type Handler interface {
-	GetWallets(*fiber.Ctx)
-	PostEvents(*fiber.Ctx)
+	GetWallets(c *fiber.Ctx) error
+	PostEvents(c *fiber.Ctx) error
+	HealthCheck(c *fiber.Ctx) error
 }
 
 type WalletHandler struct {

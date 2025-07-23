@@ -8,8 +8,8 @@ import (
 )
 
 type Service interface {
-	GetWallets(context.Context)
-	SendEvents(context.Context)
+	GetWallets(context.Context) ([]entity.Wallet, error)
+	SendEvents(context.Context) error
 }
 
 type WalletService struct {

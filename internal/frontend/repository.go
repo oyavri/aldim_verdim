@@ -14,7 +14,7 @@ var (
 )
 
 type WalletRepository interface {
-	GetWallets(context.Context)
+	GetWallets(context.Context) ([]entity.Wallet, error)
 }
 
 type WalletRepo struct {
