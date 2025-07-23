@@ -53,10 +53,16 @@ func Run() {
 	signal.Stop(signalChan)
 
 	log.Println("App is shutting down")
-	app.Shutdown()
+	err = app.Shutdown()
+	if err != nil {
+		log.Printf("An error occurred when app is shutting down: %w", err)
+	}
 
 	log.Println("Producer is closing")
-	kafkaProducer.Close()
+	err = kafkaProducer.Close()
+	if err != nil {
+		log.Printf("An error occurred when producer is being closed: %w", err)
+	}
 
 	log.Println("Database connection is closing")
 	dbPool.Close()

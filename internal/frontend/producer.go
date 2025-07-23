@@ -35,6 +35,6 @@ func (kp *KafkaProducer) Produce(ctx context.Context, key []byte, value []byte) 
 	return nil
 }
 
-func (kp *KafkaProducer) Close() {
-	kp.w.Close()
+func (kp *KafkaProducer) Close() error {
+	return kp.w.Close()
 }
