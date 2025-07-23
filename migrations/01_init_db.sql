@@ -4,8 +4,6 @@ DROP TABLE IF EXISTS user_wallets;
 
 CREATE TABLE wallet (
     id VARCHAR PRIMARY KEY,
-    currency CHAR(3) NOT NULL,
-    amount NUMERIC(16, 3) NOT NULL,
 );
 
 CREATE TABLE user (
@@ -22,3 +20,12 @@ CREATE TABLE user_wallets (
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
+
+CREATE TABLE wallet_balance (
+    walletId VARCHAR NOT NULL,
+    currency CHAR(3) NOT NULL,
+    amount NUMERIC(16, 3) NOT NULL,
+    FOREIGN KEY (walletId) REFERENCES wallet(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+)

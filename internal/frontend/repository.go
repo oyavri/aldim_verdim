@@ -9,8 +9,8 @@ import (
 )
 
 var (
-	//go:embed sql/get_balance.sql
-	getBalanceQuery string
+	//go:embed sql/get_balances.sql
+	getBalancesQuery string
 )
 
 type WalletRepository interface {
@@ -26,7 +26,7 @@ func NewWalletRepository(pool *pgxpool.Pool) *WalletRepo {
 }
 
 func (r *WalletRepo) GetWallets(ctx context.Context) ([]entity.Wallet, error) {
-	rows, err := r.pool.Query(ctx, getBalanceQuery)
+	rows, err := r.pool.Query(ctx, getBalancesQuery)
 	if err != nil {
 		return nil, err
 	}
