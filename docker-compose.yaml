@@ -22,6 +22,20 @@ services:
       timeout: 5s
       retries: 5
 
+  init-kafka:
+    image: bitnami/kafka:latest
+    depends_on:
+      broker:
+        condition: service_healthy
+    entrypoint: [ '/bin/sh', '-c' ]
+    command: |
+      "
+      # Block until Kafka is reachable
+      kafka-topics.sh --bootstrap-server broker:29092 --list
+
+      echo 'Creating Kafka topics...'
+      kafka-topics.sh --bootstrap-server broker:29092 --create --if-not-exists --topic wallet-transaction --partitions 1 --replication-factor 1
+      "
 
   db:
     image: postgres:alpine3.22
