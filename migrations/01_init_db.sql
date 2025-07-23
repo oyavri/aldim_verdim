@@ -1,6 +1,7 @@
 DROP TABLE IF EXISTS wallet;
 DROP TABLE IF EXISTS user;
 DROP TABLE IF EXISTS user_wallets;
+DROP TABLE IF EXISTS wallet_balance;
 
 CREATE TABLE wallet (
     id VARCHAR PRIMARY KEY,
