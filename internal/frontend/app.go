@@ -55,13 +55,13 @@ func Run() {
 	log.Println("App is shutting down")
 	err = app.Shutdown()
 	if err != nil {
-		log.Printf("An error occurred when app is shutting down: %w", err)
+		log.Printf("An error occurred when app is shutting down: %v", err)
 	}
 
 	log.Println("Producer is closing")
 	err = kafkaProducer.Close()
 	if err != nil {
-		log.Printf("An error occurred when producer is being closed: %w", err)
+		log.Printf("An error occurred when producer is being closed: %v", err)
 	}
 
 	log.Println("Database connection is closing")
