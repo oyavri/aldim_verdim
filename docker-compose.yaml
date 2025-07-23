@@ -19,6 +19,16 @@ services:
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_LOG_DIRS: /tmp/kraft-combined-logs
+    command: >
+      bash -c "
+        if [ ! -f /tmp/kraft-combined-logs/meta.properties ]; then
+          /opt/kafka/bin/kafka-storage.sh format -t $(/opt/kafka/bin/kafka-storage.sh random-uuid) -c /opt/kafka/config/kraft/server.properties
+        fi &&
+        /opt/kafka/bin/kafka-server-start.sh /opt/kafka/config/kraft/server.properties &
+        sleep 10 &&
+        /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --topic wallet-transaction --bootstrap-server broker:29092 --replication-factor 1 --partitions 3 &&
+        wait
+      "
 
   db:
     image: postgres:alpine3.22
