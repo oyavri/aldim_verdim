@@ -2,6 +2,7 @@ package worker
 
 import (
 	"context"
+	"log"
 	"strconv"
 
 	"github.com/oyavri/aldim_verdim/pkg/entity"
@@ -27,6 +28,8 @@ func (s *EventService) HandleEvent(ctx context.Context, event entity.Event) erro
 	if err != nil {
 		return err
 	}
+
+	log.Printf("Handling event: %v", event)
 
 	switch event.ActionType {
 	case "BALANCE_INCREASE":

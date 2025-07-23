@@ -48,6 +48,7 @@ func Run() {
 		cancelFunc()
 	}(dbPool, kafkaConsumer, cancel)
 
+	log.Println("Worker started running")
 	for {
 		e, err := kafkaConsumer.Consume(ctx)
 		if err != nil {
