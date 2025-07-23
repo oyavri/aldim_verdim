@@ -2,6 +2,7 @@ package frontend
 
 import (
 	"encoding/json"
+	"strconv"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/oyavri/aldim_verdim/pkg/dto"
@@ -32,6 +33,13 @@ func (h *WalletHandler) PostEvents(c *fiber.Ctx) error {
 	}
 
 	for _, event := range request.Events {
+		amountStr := event.ActionAttributes.Amount
+		_, err := strconv.ParseFloat(amountStr, 64) // Still pass the amount as string to be consumed
+
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid amount parameter"})
+		}
+
 		payload, err := json.Marshal(event)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "serialization failed"})
@@ -55,4 +63,8 @@ func (h *WalletHandler) GetWallets(c *fiber.Ctx) error {
 		dto.WalletResponse{
 			Wallets: wallets,
 		})
+}
+
+func (h *WalletHandler) HealthCheck(c *fiber.Ctx) error {
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "healthy"})
 }

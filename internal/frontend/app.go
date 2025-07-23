@@ -8,7 +8,6 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/oyavri/aldim_verdim/pkg/db"
@@ -26,16 +25,10 @@ func Run() {
 		log.Fatal("Error creating database pool")
 	}
 
-	producer, err := kafka.NewProducer(
-		&kafka.ConfigMap{
-			"bootstrap.servers": cfg.Broker,
-		})
-	if err != nil {
-		log.Fatal("Failed to create new producer")
-	}
+	kafkaProducer := NewKafkaProducer(cfg.Broker, cfg.BrokerTopic)
 
 	repository := NewWalletRepository(dbPool)
-	service := NewWalletService(repository, producer, cfg.BrokerTopic)
+	service := NewWalletService(repository, kafkaProducer)
 	handler := NewWalletHandler(service)
 
 	app := fiber.New(fiber.Config{
@@ -43,13 +36,10 @@ func Run() {
 	})
 
 	app.Use(logger.New())
+	app.Get("/healthz", handler.HealthCheck)
 
 	app.Get("/", handler.GetWallets)
 	app.Post("/", handler.PostEvents)
-
-	app.Get("/healthz", func(c *fiber.Ctx) error {
-		return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "healthy"})
-	})
 
 	go func() {
 		log.Printf("Server is starting to listen requests on %s:%s\n", cfg.Hostname, cfg.Port)
@@ -62,9 +52,12 @@ func Run() {
 	<-signalChan
 	signal.Stop(signalChan)
 
+	log.Println("App is shutting down")
 	app.Shutdown()
-	log.Println("App is successfully shut down")
 
+	log.Println("Producer is closing")
+	kafkaProducer.Close()
+
+	log.Println("Database connection is closing")
 	dbPool.Close()
-	log.Println("Database connection is successfully closed")
 }
