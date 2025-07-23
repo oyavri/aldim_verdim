@@ -1,20 +1,20 @@
 DROP TABLE IF EXISTS wallet;
-DROP TABLE IF EXISTS user;
+DROP TABLE IF EXISTS wallet_user;
 DROP TABLE IF EXISTS user_wallets;
 DROP TABLE IF EXISTS wallet_balance;
 
 CREATE TABLE wallet (
-    id VARCHAR PRIMARY KEY,
+    id VARCHAR PRIMARY KEY
 );
 
-CREATE TABLE user (
+CREATE TABLE wallet_user (
     id VARCHAR PRIMARY KEY
 );
 
 CREATE TABLE user_wallets (
     userId VARCHAR NOT NULL,
     walletId VARCHAR NOT NULL,
-    FOREIGN KEY (userId) REFERENCES user(id)
+    FOREIGN KEY (userId) REFERENCES wallet_user(id)
         ON DELETE CASCADE
         ON UPDATE CASCADE,
     FOREIGN KEY (walletId) REFERENCES wallet(id)
