@@ -58,20 +58,27 @@ services:
   frontend:
     hostname: fiber_server
     build:
+      context: .
       dockerfile: ./internal/frontend/Dockerfile
     ports:
       - "8080:8080"
     depends_on: 
-      - broker
-      - db
+      broker:
+        condition: service_healthy
+      db:
+        condition: service_healthy
     env_file:
       - ./internal/frontend/.env
 
   worker:
+    platform: linux/amd64
     build:
+      context: .
       dockerfile: ./internal/worker/Dockerfile
     depends_on:
-      - broker
-      - db
+      broker:
+        condition: service_healthy
+      db:
+        condition: service_healthy
     env_file:
       - ./internal/worker/.env
