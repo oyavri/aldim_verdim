@@ -1,10 +1,12 @@
 package frontend
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strconv"
 	"sync"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/oyavri/aldim_verdim/pkg/dto"
@@ -52,6 +54,8 @@ func (h *WalletHandler) PostEvents(c *fiber.Ctx) error {
 
 		go func(event entity.Event) {
 			defer wg.Done()
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
 
 			amountStr := event.ActionAttributes.Amount
 			_, err := strconv.ParseFloat(amountStr, 64) // Still pass the amount as string to be consumed
@@ -61,7 +65,7 @@ func (h *WalletHandler) PostEvents(c *fiber.Ctx) error {
 				return
 			}
 
-			if err := h.service.SendTransaction(c.Context(), event); err != nil {
+			if err := h.service.SendTransaction(ctx, event); err != nil {
 				errChan <- fmt.Errorf("failed to publish to Kafka: %w", err)
 				return
 			}
