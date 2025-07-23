@@ -7,6 +7,7 @@ import (
 
 type Config struct {
 	DbConnectionString string
+	ConsumerGroupId    string
 	Broker             string
 	BrokerTopic        string
 }
@@ -25,9 +26,11 @@ func LoadConfig() (Config, error) {
 	brokerPort := os.Getenv("KAFKA_PORT")
 	broker := fmt.Sprintf("%s:%s", brokerHostname, brokerPort)
 	brokerTopic := os.Getenv("KAFKA_TOPIC")
+	groupId := os.Getenv("CONSUMER_GROUP_ID")
 
 	return Config{
 		DbConnectionString: dbConnStr,
+		ConsumerGroupId:    groupId,
 		Broker:             broker,
 		BrokerTopic:        brokerTopic,
 	}, nil

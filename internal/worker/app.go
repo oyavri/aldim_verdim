@@ -27,7 +27,7 @@ func Run() {
 	}
 
 	// Since I am using single broker, I will wrap the only broker into a slice
-	kafkaConsumer := NewKafkaConsumer([]string{cfg.Broker}, cfg.BrokerTopic)
+	kafkaConsumer := NewKafkaConsumer(cfg.ConsumerGroupId, []string{cfg.Broker}, cfg.BrokerTopic)
 
 	repository := NewWalletRepository(dbPool)
 	service := NewEventService(repository)
