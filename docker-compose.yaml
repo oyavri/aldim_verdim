@@ -59,11 +59,11 @@ services:
     env_file:
       - ./internal/frontend/.env
 
-  # worker:
-  #   build:
-  #     dockerfile: ./internal/worker/Dockerfile
-  #   depends_on:
-  #     - broker
-  #     - db
-  #   env_file:
-  #     - ./internal/worker/.env
+  worker:
+    build:
+      dockerfile: ./internal/worker/Dockerfile
+    depends_on:
+      - broker
+      - db
+    env_file:
+      - ./internal/worker/.env
