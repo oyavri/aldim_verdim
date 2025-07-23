@@ -2,8 +2,8 @@ package frontend
 
 import (
 	"context"
+	"encoding/json"
 
-	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/oyavri/aldim_verdim/pkg/entity"
 )
 
@@ -14,15 +14,13 @@ type Service interface {
 
 type WalletService struct {
 	repo     *WalletRepo
-	producer *kafka.Producer
-	topic    string
+	producer *KafkaProducer
 }
 
-func NewWalletService(repo *WalletRepo, producer *kafka.Producer, topic string) *WalletService {
+func NewWalletService(repo *WalletRepo, producer *KafkaProducer) *WalletService {
 	return &WalletService{
 		repo:     repo,
 		producer: producer,
-		topic:    topic,
 	}
 }
 
@@ -36,13 +34,13 @@ func (s *WalletService) GetWallets(c context.Context) ([]entity.Wallet, error) {
 	return wallets, nil
 }
 
-func (s *WalletService) SendTransaction(c context.Context, action string, payload []byte) error {
-	err := s.producer.Produce(&kafka.Message{
-		TopicPartition: kafka.TopicPartition{Topic: &s.topic, Partition: kafka.PartitionAny},
-		Key:            []byte(action), // what should key be?
-		Value:          payload,
-	}, nil) // Throw away any report from the delivery
+func (s *WalletService) SendTransaction(c context.Context, event entity.Event) error {
+	serializedEvent, err := json.Marshal(event)
+	if err != nil {
+		return err
+	}
 
+	err = s.producer.Produce(c, []byte(event.AppId), serializedEvent)
 	if err != nil {
 		return err
 	}
