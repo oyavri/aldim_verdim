@@ -30,12 +30,15 @@ func Run() {
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
 
-	<-signalChan
-	signal.Stop(signalChan)
+	// Graceful shutdown
+	go func() {
+		<-signalChan
+		signal.Stop(signalChan)
 
-	log.Println("Consumer is closing")
-	kafkaConsumer.Close()
+		log.Println("Consumer is closing")
+		kafkaConsumer.Close()
 
-	log.Println("Database connection is closing")
-	dbPool.Close()
+		log.Println("Database connection is closing")
+		dbPool.Close()
+	}()
 }
