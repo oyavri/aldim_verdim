@@ -71,7 +71,6 @@ services:
       - ./internal/frontend/.env
 
   worker:
-    platform: linux/amd64
     build:
       context: .
       dockerfile: ./internal/worker/Dockerfile
