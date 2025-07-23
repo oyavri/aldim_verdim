@@ -72,16 +72,16 @@ func (h *WalletHandler) PostEvents(c *fiber.Ctx) error {
 		}(event)
 
 		wg.Wait()
-		close(errChan)
+	}
 
-		if len(errChan) > 0 {
-			var allErrors []string
-			for err := range errChan {
-				allErrors = append(allErrors, err.Error())
-			}
-
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"errors": allErrors})
+	close(errChan)
+	if len(errChan) > 0 {
+		var allErrors []string
+		for err := range errChan {
+			allErrors = append(allErrors, err.Error())
 		}
+
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"errors": allErrors})
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "successfully published to Kafka"})
