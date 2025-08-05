@@ -3,7 +3,6 @@ package frontend
 import (
 	"context"
 	"fmt"
-	"sort"
 	"strconv"
 	"sync"
 	"time"
@@ -38,11 +37,6 @@ func (h *WalletHandler) PostEvents(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid request"})
 	}
 
-	// Sort the sent events by time to send them in a FIFO queue on Kafka
-	sort.Slice(request.Events, func(i, j int) bool {
-		return request.Events[i].Time < request.Events[j].Time
-	})
-
 	var (
 		wg      sync.WaitGroup
 		errChan = make(chan error, len(request.Events))
@@ -70,9 +64,9 @@ func (h *WalletHandler) PostEvents(c *fiber.Ctx) error {
 				return
 			}
 		}(event)
-
-		wg.Wait()
 	}
+
+	wg.Wait()
 
 	close(errChan)
 	if len(errChan) > 0 {

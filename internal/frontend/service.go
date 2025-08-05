@@ -40,7 +40,7 @@ func (s *WalletService) SendTransaction(c context.Context, event entity.Event) e
 		return err
 	}
 
-	err = s.producer.Produce(c, []byte(event.AppId), serializedEvent)
+	err = s.producer.Produce(c, []byte(event.WalletId), serializedEvent)
 	if err != nil {
 		return err
 	}
