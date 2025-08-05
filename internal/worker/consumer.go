@@ -39,6 +39,21 @@ func (kc *KafkaConsumer) Consume(ctx context.Context) (entity.Event, error) {
 	return event, nil
 }
 
+func (kc *KafkaConsumer) ConsumeBatch(ctx context.Context, batchSize int) ([]entity.Event, error) {
+	var messages []entity.Event
+
+	for range batchSize {
+		message, err := kc.Consume(ctx)
+		if err != nil {
+			return messages, err
+		}
+
+		messages = append(messages, message)
+	}
+
+	return messages, nil
+}
+
 func (kc *KafkaConsumer) Close() error {
 	return kc.r.Close()
 }
