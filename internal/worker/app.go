@@ -50,13 +50,20 @@ func Run() {
 
 	log.Println("Worker started running")
 	for {
+		if ctx.Err() != nil {
+			log.Println("Context cancelled, stopping worker")
+			return
+		}
+
 		events, err := kafkaConsumer.ConsumeBatch(ctx, 50)
 		if err != nil {
-			log.Println("Error consuming events: %v", err)
+			log.Printf("Error consuming events: %v", err)
 			continue
 		}
 
 		e := make(map[string][]entity.Event)
+		processedWalletIds := make(chan string)
+
 		for _, event := range events {
 			walletTransactions, ok := e[event.WalletId]
 			if !ok {
@@ -67,20 +74,23 @@ func Run() {
 			}
 
 			walletTransactions = append(walletTransactions, event)
+			e[event.WalletId] = walletTransactions
 		}
 
-		if ctx.Err() != nil {
-			log.Println("Context cancelled, stopping worker")
-			return
-		}
-
-		for _, transactions := range e {
-			go func(transactions []entity.Event) {
+		for walletId, transactions := range e {
+			go func(walletId string, transactions []entity.Event) {
 				err := service.HandleEvents(ctx, transactions)
 				if err != nil {
 					log.Printf("Failed to handle events with the error: %v", err)
 				}
-			}(transactions)
+				processedWalletIds <- walletId
+			}(walletId, transactions)
+		}
+
+		if len(processedWalletIds) > 0 {
+			for walletId := range processedWalletIds {
+				delete(e, walletId)
+			}
 		}
 	}
 }
