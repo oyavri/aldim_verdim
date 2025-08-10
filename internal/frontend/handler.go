@@ -1,11 +1,9 @@
 package frontend
 
 import (
-	"context"
-	"fmt"
+	"log"
+	"sort"
 	"strconv"
-	"sync"
-	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/oyavri/aldim_verdim/pkg/dto"
@@ -37,48 +35,47 @@ func (h *WalletHandler) PostEvents(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid request"})
 	}
 
-	var (
-		wg      sync.WaitGroup
-		errChan = make(chan error, len(request.Events))
-	)
+	sort.Slice(request.Events, func(i, j int) bool {
+		return request.Events[i].Time.Before(request.Events[j].Time)
+	})
 
-	for _, e := range request.Events {
-		event := e
-		wg.Add(1)
+	var failedToParse []entity.Event
+	var failedToPublish []entity.Event
 
-		go func(event entity.Event) {
-			defer wg.Done()
-			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-			defer cancel()
+	for _, event := range request.Events {
+		amountStr := event.ActionAttributes.Amount
+		_, err := strconv.ParseFloat(amountStr, 64) // Still pass the amount as string to be consumed
 
-			amountStr := event.ActionAttributes.Amount
-			_, err := strconv.ParseFloat(amountStr, 64) // Still pass the amount as string to be consumed
-
-			if err != nil {
-				errChan <- fmt.Errorf("invalid amount parameter: %w", err)
-				return
-			}
-
-			if err := h.service.SendTransaction(ctx, event); err != nil {
-				errChan <- fmt.Errorf("failed to publish to Kafka: %w", err)
-				return
-			}
-		}(event)
-	}
-
-	wg.Wait()
-
-	close(errChan)
-	if len(errChan) > 0 {
-		var allErrors []string
-		for err := range errChan {
-			allErrors = append(allErrors, err.Error())
+		if err != nil {
+			log.Printf("failed to parse float: %v", err)
+			failedToParse = append(failedToParse, event)
 		}
 
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"errors": allErrors})
+		if err := h.service.SendTransaction(c.Context(), event); err != nil {
+			log.Printf("failed to publish to Kafka: %v", err)
+			failedToPublish = append(failedToPublish, event)
+		}
 	}
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "successfully published to Kafka"})
+	if len(failedToParse) > 0 && len(failedToPublish) > 0 {
+		return c.Status(fiber.StatusMultiStatus).JSON(
+			fiber.Map{
+				"error": fiber.Map{
+					"failedToParse":   failedToParse,
+					"failedToPublish": failedToPublish,
+				},
+			})
+	}
+
+	if len(failedToParse) > 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": failedToParse})
+	}
+
+	if len(failedToPublish) > 0 {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": failedToPublish})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "all events have successfully been published"})
 }
 
 func (h *WalletHandler) GetWallets(c *fiber.Ctx) error {

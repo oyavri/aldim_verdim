@@ -1,5 +1,7 @@
 package entity
 
+import "time"
+
 type Wallet struct {
 	Id       string    `json:"id"`
 	Balances []Balance `json:"balances"`
@@ -13,7 +15,7 @@ type Balance struct {
 type Event struct {
 	AppId            string           `json:"app"`
 	ActionType       string           `json:"type"`
-	Time             string           `json:"time"` // needs refactoring according to Kafka or db
+	Time             time.Time        `json:"time"` // needs refactoring according to Kafka or db
 	Meta             Meta             `json:"meta"`
 	WalletId         string           `json:"wallet"`
 	ActionAttributes ActionAttributes `json:"attributes"`

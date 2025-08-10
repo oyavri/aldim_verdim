@@ -3,7 +3,6 @@ package worker
 import (
 	"context"
 	"log"
-	"sort"
 	"strconv"
 
 	"github.com/oyavri/aldim_verdim/pkg/entity"
@@ -24,10 +23,6 @@ func NewEventService(repo *WalletRepo) *EventService {
 }
 
 func (s *EventService) HandleEvents(ctx context.Context, events []entity.Event) error {
-	sort.Slice(events, func(i, j int) bool {
-		return events[i].Time < events[j].Time
-	})
-
 	for _, event := range events {
 		amountStr := event.ActionAttributes.Amount
 		amountParsed, err := strconv.ParseFloat(amountStr, 64)
