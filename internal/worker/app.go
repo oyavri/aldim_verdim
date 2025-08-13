@@ -19,7 +19,6 @@ func Run() {
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
 
 	dbPool, err := db.NewPostgresPool(ctx, cfg.DbConnectionString)
 	if err != nil {
@@ -30,7 +29,7 @@ func Run() {
 	kafkaConsumer := NewKafkaConsumer(cfg.ConsumerGroupId, []string{cfg.Broker}, cfg.BrokerTopic)
 
 	repository := NewWalletRepository(dbPool)
-	service := NewEventService(repository)
+	service := NewEventService(repository, cfg.MaxGoroutineCount)
 
 	// Graceful shutdown
 	go func(dbPool *pgxpool.Pool, kc *KafkaConsumer, cancelFunc context.CancelFunc) {
@@ -38,6 +37,8 @@ func Run() {
 		signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
 		<-signalChan
 		signal.Stop(signalChan)
+
+		cancelFunc()
 
 		log.Println("Consumer is closing")
 		kc.Close()
@@ -55,42 +56,16 @@ func Run() {
 			return
 		}
 
-		events, err := kafkaConsumer.ConsumeBatch(ctx, 50)
+		event, err := kafkaConsumer.Consume(ctx)
 		if err != nil {
-			log.Printf("Error consuming events: %v", err)
+			log.Printf("Error consuming event: %v", err)
 			continue
 		}
 
-		e := make(map[string][]entity.Event)
-		processedWalletIds := make(chan string)
-
-		for _, event := range events {
-			walletTransactions, ok := e[event.WalletId]
-			if !ok {
-				walletTransactions := []entity.Event{}
-				walletTransactions = append(walletTransactions, event)
-				e[event.WalletId] = walletTransactions
-				continue
-			}
-
-			walletTransactions = append(walletTransactions, event)
-			e[event.WalletId] = walletTransactions
-		}
-
-		for walletId, transactions := range e {
-			go func(walletId string, transactions []entity.Event) {
-				err := service.HandleEvents(ctx, transactions)
-				if err != nil {
-					log.Printf("Failed to handle events with the error: %v", err)
-				}
-				processedWalletIds <- walletId
-			}(walletId, transactions)
-		}
-
-		if len(processedWalletIds) > 0 {
-			for walletId := range processedWalletIds {
-				delete(e, walletId)
-			}
-		}
+		go func(ctx context.Context, e entity.Event) {
+			event := e
+			log.Printf("Handling event: %v", e)
+			service.HandleEvent(ctx, event)
+		}(ctx, event)
 	}
 }
