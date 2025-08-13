@@ -9,7 +9,7 @@ import (
 	"github.com/oyavri/aldim_verdim/pkg/entity"
 )
 
-var canceledContextError = errors.New("context cancelled")
+var errCanceledContext = errors.New("context cancelled")
 
 type Service interface {
 	HandleEvent(ctx context.Context, event entity.Event) error
@@ -36,7 +36,7 @@ func (s *EventService) HandleEvent(ctx context.Context, event entity.Event) erro
 		defer func() { <-s.sem }()
 	case <-ctx.Done():
 		fmt.Printf("Context cancelled before handling following event: %v", event)
-		return canceledContextError
+		return errCanceledContext
 	}
 
 	// Lock walletId for sequential processing
