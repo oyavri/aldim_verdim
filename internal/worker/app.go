@@ -2,9 +2,11 @@ package worker
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -20,7 +22,10 @@ func Run() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	dbPool, err := db.NewPostgresPool(ctx, cfg.DbConnectionString)
+	// Pool size should be equal (or greater than) the maximum goroutine count
+	connString := fmt.Sprintf("%v?pool_max_conns=%v", cfg.DbConnectionString, cfg.MaxGoroutineCount)
+
+	dbPool, err := db.NewPostgresPool(ctx, connString)
 	if err != nil {
 		log.Fatal("Error creating database pool")
 	}
@@ -29,7 +34,7 @@ func Run() {
 	kafkaConsumer := NewKafkaConsumer(cfg.ConsumerGroupId, []string{cfg.Broker}, cfg.BrokerTopic)
 
 	repository := NewWalletRepository(dbPool)
-	service := NewEventService(repository, cfg.MaxGoroutineCount)
+	service := NewEventService(repository)
 
 	// Graceful shutdown
 	go func(dbPool *pgxpool.Pool, kc *KafkaConsumer, cancelFunc context.CancelFunc) {
@@ -45,26 +50,40 @@ func Run() {
 
 		log.Println("Database connection is closing")
 		dbPool.Close()
-
-		cancelFunc()
 	}(dbPool, kafkaConsumer, cancel)
+
+	var wg sync.WaitGroup
+	concurrentGoroutineCount := make(chan struct{}, cfg.MaxGoroutineCount)
 
 	log.Println("Worker started running")
 	for {
 		if ctx.Err() != nil {
-			log.Println("Context cancelled, stopping worker")
+			log.Println("Context cancelled, stopping worker after jobs are done.")
+			wg.Wait()
+			log.Println("All of the jobs are done, shutting worker down.")
 			return
 		}
 
 		event, err := kafkaConsumer.Consume(ctx)
 		if err != nil {
+			// In case the error is due to context cancellation
+			if ctx.Err() != nil {
+				continue
+			}
+
 			log.Printf("Error consuming event: %v", err)
 			continue
 		}
 
-		go func(ctx context.Context, e entity.Event) {
-			event := e
-			log.Printf("Handling event: %v", e)
+		wg.Add(1)
+		concurrentGoroutineCount <- struct{}{}
+
+		go func(ctx context.Context, event entity.Event) {
+			defer func() {
+				<-concurrentGoroutineCount
+				wg.Done()
+			}()
+			log.Printf("Handling event: %v", event)
 			service.HandleEvent(ctx, event)
 		}(ctx, event)
 	}

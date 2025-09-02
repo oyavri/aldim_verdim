@@ -2,14 +2,10 @@ package worker
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"strconv"
 
 	"github.com/oyavri/aldim_verdim/pkg/entity"
 )
-
-var errCanceledContext = errors.New("context cancelled")
 
 type Service interface {
 	HandleEvent(ctx context.Context, event entity.Event) error
@@ -17,28 +13,17 @@ type Service interface {
 
 type EventService struct {
 	repo   *WalletRepo
-	sem    chan struct{} // for maximum goroutine limit
 	locker *KeyedLocker
 }
 
-func NewEventService(repo *WalletRepo, maxConcurrentGoroutine int) *EventService {
+func NewEventService(repo *WalletRepo) *EventService {
 	return &EventService{
 		repo:   repo,
-		sem:    make(chan struct{}, maxConcurrentGoroutine),
 		locker: NewKeyedLocker(),
 	}
 }
 
 func (s *EventService) HandleEvent(ctx context.Context, event entity.Event) error {
-	// Increase current goroutine count
-	select {
-	case s.sem <- struct{}{}:
-		defer func() { <-s.sem }()
-	case <-ctx.Done():
-		fmt.Printf("Context cancelled before handling following event: %v", event)
-		return errCanceledContext
-	}
-
 	// Lock walletId for sequential processing
 	s.locker.Lock(event.WalletId)
 	defer s.locker.Unlock(event.WalletId)
