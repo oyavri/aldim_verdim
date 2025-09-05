@@ -16,8 +16,8 @@ var (
 )
 
 type WalletRepository interface {
-	IncreaseBalance(ctx context.Context, userId string, walletId string, amount float64, currency string) error
-	DecreaseBalance(ctx context.Context, userId string, walletId string, amount float64, currency string) error
+	IncreaseBalance(ctx context.Context, walletId string, amount float64, currency string) error
+	DecreaseBalance(ctx context.Context, walletId string, amount float64, currency string) error
 }
 
 type WalletRepo struct {
