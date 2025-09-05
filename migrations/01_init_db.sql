@@ -29,4 +29,4 @@ CREATE TABLE wallet_balance (
     FOREIGN KEY (walletId) REFERENCES wallet(id)
         ON DELETE CASCADE
         ON UPDATE CASCADE
-)
+);
