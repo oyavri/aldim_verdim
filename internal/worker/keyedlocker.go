@@ -8,33 +8,26 @@ type Locker interface {
 }
 
 type KeyedLocker struct {
-	mu    sync.Mutex
-	locks map[string]*sync.Mutex
+	locks sync.Map
 }
 
 func NewKeyedLocker() *KeyedLocker {
-	return &KeyedLocker{
-		locks: make(map[string]*sync.Mutex),
-	}
+	return &KeyedLocker{}
 }
 
 func (kl *KeyedLocker) Lock(key string) {
-	kl.mu.Lock()
-	defer kl.mu.Unlock()
+	val, _ := kl.locks.LoadOrStore(key, &sync.Mutex{})
+	lock := val.(*sync.Mutex)
 
-	lock, ok := kl.locks[key]
-	if !ok {
-		lock = &sync.Mutex{}
-		kl.locks[key] = lock
-	}
 	lock.Lock()
 }
 
 func (kl *KeyedLocker) Unlock(key string) {
-	kl.mu.Lock()
-	defer kl.mu.Unlock()
-
-	if lock, ok := kl.locks[key]; ok {
-		lock.Unlock()
+	val, ok := kl.locks.Load(key)
+	if !ok {
+		return
 	}
+
+	lock := val.(*sync.Mutex)
+	lock.Unlock()
 }
