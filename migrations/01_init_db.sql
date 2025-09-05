@@ -24,9 +24,13 @@ CREATE TABLE user_wallets (
 
 CREATE TABLE wallet_balance (
     walletId VARCHAR NOT NULL,
-    currency CHAR(3) UNIQUE,
+    currency CHAR(3) NOT NULL,
     amount NUMERIC NOT NULL CHECK (amount >= 0),
     FOREIGN KEY (walletId) REFERENCES wallet(id)
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
+
+ALTER TABLE wallet_balance
+ADD CONSTRAINT uniq_wallet_currency
+UNIQUE (walletId, currency);
