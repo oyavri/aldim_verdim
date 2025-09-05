@@ -84,7 +84,10 @@ func Run() {
 				wg.Done()
 			}()
 			log.Printf("Handling event: %v", event)
-			service.HandleEvent(ctx, event)
+			err := service.HandleEvent(ctx, event)
+			if err != nil {
+				log.Printf("%v", err)
+			}
 		}(ctx, event)
 	}
 }
